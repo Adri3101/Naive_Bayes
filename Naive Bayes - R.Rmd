@@ -1,0 +1,68 @@
+---
+title: "Investigacion_3_Naive_Bayes"
+author: "Adriana Fernández"
+date: "25/7/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Install packages
+
+install.packages("bayesrules") 
+install.packages('e1071', dependencies=TRUE)
+install.packages("magrittr")
+install.packages("dplyr") 
+install.packages("palmerpenguins")
+
+# Load packages
+library(bayesrules)
+library(tidyverse)
+library(e1071)
+library(janitor)
+library(magrittr)
+library(dplyr)
+
+#Implementing Naive Bayes
+naive_model_1 <- naiveBayes(Species ~ Culmen.Length..mm., data = penguins)
+
+naive_model_2 <- naiveBayes(Species ~ Culmen.Length..mm. + Flipper.Length..mm., 
+                            data = penguins)
+
+our_penguin <- data.frame(Culmen.Length..mm. = 50, Flipper.Length..mm. = 195)
+
+predict(naive_model_1, newdata = our_penguin, type = "raw")
+
+predict(naive_model_1, newdata = our_penguin)
+
+predict(naive_model_2, newdata = our_penguin, type = "raw")    
+
+predict(naive_model_2, newdata = our_penguin)
+
+penguins <- penguins %>% 
+  mutate(class_1 = predict(naive_model_1, newdata = .),
+         class_2 = predict(naive_model_2, newdata = .))
+         
+set.seed(84735)
+penguins %>% 
+  sample_n(4) %>% 
+  select(Culmen.Length..mm., Flipper.Length..mm., Species, class_1, class_2) %>% 
+  rename(Culmen = Culmen.Length..mm., flipper = Flipper.Length..mm.)
+
+# A tibble: 4 x 5
+culmen flipper species   class_1 class_2  
+
+# Confusion matrix for naive_model_1
+penguins %>% 
+  tabyl(Species, class_1) %>% 
+  adorn_percentages("row") %>% 
+  adorn_pct_formatting(digits = 2) %>%
+  adorn_ns()
+  
+# Confusion matrix for naive_model_2
+penguins %>% 
+  tabyl(Species, class_2) %>% 
+  adorn_percentages("row") %>% 
+  adorn_pct_formatting(digits = 2) %>%
+  adorn_ns()
