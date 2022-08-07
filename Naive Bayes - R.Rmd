@@ -1,0 +1,97 @@
+---
+title: "Investigacion_3_Naive_Bayes"
+author: "Adriana Fernández"
+date: "25/7/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE, error=TRUE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Install packages
+```{r}
+#install.packages("palmerpenguins",repos = "	https://yihui.org/knitr/")
+#install.packages("bayesrules") 
+#install.packages('e1071', dependencies=TRUE)
+#install.packages("magrittr")
+#install.packages("dplyr") 
+```
+
+# Load packages
+```{r}
+library(bayesrules)
+library(tidyverse)
+library(e1071)
+library(janitor)
+library(magrittr)
+library(dplyr)
+library(palmerpenguins)
+```
+
+```{r}
+head(penguins)
+```
+
+
+#Implementing Naive Bayes
+```{r}
+naive_model_1 <- naiveBayes(species ~ bill_length_mm, data = penguins)
+naive_model_2 <- naiveBayes(species ~ bill_length_mm + flipper_length_mm, 
+                            data = penguins)
+```
+
+```{r}
+our_penguin <- data.frame(bill_length_mm = 50, flipper_length_mm = 195)
+```
+
+```{r}
+predict(naive_model_1, newdata = our_penguin, type = "raw")
+predict(naive_model_1, newdata = our_penguin)
+```
+
+```{r}
+predict(naive_model_2, newdata = our_penguin, type = "raw")
+predict(naive_model_2, newdata = our_penguin)
+```
+
+```{r}
+penguins <- penguins %>% 
+  mutate(class_1 = predict(naive_model_1, newdata = .),
+         class_2 = predict(naive_model_2, newdata = .))
+```
+
+```{r}
+set.seed(84735)
+penguins %>% 
+  sample_n(4) %>% 
+  select(bill_length_mm, flipper_length_mm, species, class_1, class_2) %>% 
+  rename(bill = bill_length_mm, flipper = flipper_length_mm)
+```
+
+# Confusion matrix for naive_model_1
+```{r}
+penguins %>% 
+  tabyl(species, class_1) %>% 
+  adorn_percentages("row") %>% 
+  adorn_pct_formatting(digits = 2) %>%
+  adorn_ns()
+```
+  
+# Confusion matrix for naive_model_2
+```{r}
+penguins %>% 
+  tabyl(species, class_2) %>% 
+  adorn_percentages("row") %>% 
+  adorn_pct_formatting(digits = 2) %>%
+  adorn_ns()
+```
+```{r}
+set.seed(84735)
+cv_model_2 <- naive_classification_summary_cv(
+  model = naive_model_2, data = penguins, y = "species", k = 10)
+```
+
+```{r}
+cv_model_2$cv
+```
+
